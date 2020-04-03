@@ -26,7 +26,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N=1000)
             Q[j] = pdf(v, V[j])
             # P[i] += X_normal[j]
         end
-        # I divide already here to ensure that P[i] doesn't get to big
+        # I divide already here to ensure that P[i] doesn't get too big
         P[i] = sum(Q)/N
         Q .= Q ./ sum(Q)
         # in Quantiles for higher speed
@@ -57,4 +57,4 @@ Y = Y[1,:]
 likely = likelihood(Y, x0, 0.55, 0.3, 1., 1., 5000)
 
 approx(alpha) = -likelihood(Y, x0, alpha[1], alpha[2], 1., 1., 5000)*1e70
-optimize(approx, [0.6, 0.3], Optim.Options(iterations = 100))
+optimize(approx, [0.6, 0.25], Optim.Options(iterations = 500))
