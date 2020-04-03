@@ -15,12 +15,3 @@ function simulate(x0, Y::Array{Float64,2})
         Y[2,i] = Y[1,i] + V[i]
     end
 end
-
-n = 20
-x0 = 1
-Y = zeros(2,n)
-simulate(x0, Y)
-Y = Y[1,:]
-plot(Y)
-# v = TDist(2)
-# a = pdf(v, 1)
