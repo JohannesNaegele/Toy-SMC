@@ -23,6 +23,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N=1000)
     X_sample = zeros(N)
     V = zeros(N)
     Q = zeros(N)
+    Q_last = ones(N)
     w = Normal(0, σ^2)
     W = zeros(N) #rand(w, N)
     for i in 1:n
@@ -38,8 +39,9 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N=1000)
             # P[i] += X_normal[j]
         end
         # I divide already here to ensure that P[i] doesn't get too big
-        P[i] = sum(Q)/N
+        P[i] = log(sum(Q.*Q_last)/N)
         Q .= Q ./ sum(Q)
+        Q_last = Q
         # in Quantiles for higher speed
         for j in 2:N
             Q[j] += Q[j-1]
@@ -73,17 +75,18 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N=1000)
                 K += 1
             end    
             X_sample[j] = X_normal[K]
-            X_sample[j] = getindex.(Ref(trick),Q[k])
         end
     end
-    return sum(x -> log(x), P)
+    return sum(P)
 end
 
 n = 50
-N = 500000
+N = 60000
 x0 = 1
 Y = zeros(2,n)
 simulate(x0, Y)
 Y = Y[1,:]
 # plot(Y)
-@time likely = likelihood(Y, x0, 0.5, 0.3, 1., 1., 500000)
+@time likely = likelihood(Y, x0, 0.5, 0.3, 1., 1., N)
+approx(alpha) = -likelihood(Y, x0, alpha[1], alpha[2], 1., 1., N)
+optimize(approx, [0.55, 0.25], Optim.Options(iterations = 500))
