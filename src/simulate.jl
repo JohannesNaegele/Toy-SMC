@@ -1,7 +1,3 @@
-using Distributions
-using Plots
-
-
 function simulate(x0, Y::Array{Float64,2})
     n = size(Y)[2]
     w = Normal()
