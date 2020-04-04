@@ -51,11 +51,30 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N=1000)
         # sort(Q, by=x->trick[x])
         for j in 1:N
             step = rand(u)
+            # k = 1
+            # while Q[k] < step 
+            #     k += 1
+            # end
+            K = 1
+            L = Int(trunc(N/2))
+            M = N
             k = 1
-            while Q[k] < step 
-                k += 1
-            end
-            X_sample[j] = X_normal[k]
+            while K != M-1 && k < 10000
+                # println(K,L,M)
+                if Q[K+L] < step
+                    K = K+L
+                    L = Int(trunc((M-K)/2))
+                else
+                    M = K+L
+                    L = Int(trunc((M-K)/2))
+                    k += 1
+                end
+            end  
+            # println(L,K,M)
+            if Q[K] < step
+                K += 1
+            end    
+            X_sample[j] = X_normal[K]
             # X_sample[j] = getindex.(Ref(trick),Q[k])
         end
     end
