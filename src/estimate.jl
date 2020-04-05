@@ -161,13 +161,13 @@ function likelihood(Y::Array{Float64,1}, P, V, Q, W, X_normal, X_sample, x0, α,
 end
 
 n = 50
-N = 500000
+N = 100000
 x0 = 1
 Y = zeros(2,n)
 simulate(x0, Y)
 Y = Y[1,:]
 # plot(Y)
-@time likely = likelihood(Y, x0, 0.5, 0.3, 1., 1., 500000)
+@time likely = likelihood(Y, x0, 0.5, 0.3, 1., 1., N)
 P = zeros(n)
 X_normal = zeros(N)
 X_sample = zeros(N)
