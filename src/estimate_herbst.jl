@@ -95,7 +95,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     return sum(P)
 end
 
-n = 50
+n = 40
 N = 100000
 x0 = 1
 Y = zeros(2, n)
@@ -108,4 +108,4 @@ approx(alpha) = likelihood(Y, x0, alpha[1], alpha[2], alpha[3], alpha[4], N)
 
 model = DensityModel(approx)
 p1 = RWMH([Normal(0.55, 2), Normal(0.25, 2), Normal(1.1, 2), Normal(0.9, 2)])
-@time chain = sample(model, p1, 100000; param_names = ["α", "β"], chain_type = Chains)
+@time chain = sample(model, p1, 100000; param_names = ["α", "β", "δ", "σ"], chain_type = Chains)
