@@ -13,19 +13,18 @@ cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
 include("simulate.jl")
 
 
-
-function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
+function likelihood(Y::Array{Float64,1}, P, V, Q, Q_last, W, X_normal, X_sample, x0, α, β, δ, σ, N=1000)
     n = length(Y)
-    P = zeros(n)
+    # P = zeros(n)
     u = Uniform()
     v = TDist(2)
-    X_normal = zeros(N)
-    X_sample = zeros(N)
-    V = zeros(N)
-    Q = zeros(N)
-    Q_last = ones(N)
+    # X_normal = zeros(N)
+    # X_sample = zeros(N)
+    # V = zeros(N)
+    # Q = zeros(N)
+    # Q_last = ones(N)
     w = Normal(0, σ^2)
-    W = zeros(N) # rand(w, N)
+    # W = zeros(N) # rand(w, N)
     ρ = 0
     for i in 1:n
         W[:] = rand(w, N)
@@ -43,14 +42,16 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         if ρ == 0
             P[i] = log(sum(Q .* Q_last) / N)
         else
-            log(sum(Q) / N)
+            P[i] = log(sum(Q) / N)
         end
         Q .= Q ./ sum(Q)
         ESS = N^2 / (sum(Q.^2))
         if ESS < N / 2
             ρ = 1
+            println("hier")
         else
             ρ = 0
+            println(ESS)
         end
         if ρ == 1            
             # in Quantiles for higher speed
@@ -70,7 +71,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
                 L = Int(trunc(N / 2))
                 M = N
                 k = 1
-                while K != M - 1 && k < 10000
+                while K != M - 1 && k < N
                     # println(K,L,M)
                     if Q[K + L] < step
                         K = K + L
@@ -95,17 +96,33 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     return sum(P)
 end
 
-n = 40
-N = 100000
-x0 = 1
-Y = zeros(2, n)
-simulate(x0, Y)
-Y = Y[1,:]
-# plot(Y)
-@time likely = likelihood(Y, x0, 0.6, 0.3, 1., 1., N)
-approx(alpha) = likelihood(Y, x0, alpha[1], alpha[2], alpha[3], alpha[4], N)
-# optimize(approx, [0.55, 0.25], Optim.Options(iterations = 1000))
+function main()
+    n = 50
+    N = 100000
+    x0 = 1
+    Y = zeros(2, n)
+    simulate(x0, Y)
+    Y = Y[1,:]
+    P = zeros(n)
+    X_normal = zeros(N)
+    X_sample = zeros(N)
+    V = zeros(N)
+    Q = zeros(N)
+    Q_last = ones(N)
+    W = zeros(N)
+    @time likely = likelihood(Y, P, V, Q, Q_last, W, X_normal, X_sample, x0, 0.5, 0.3, 1., 1., N)
+    println(likely)
+    approx(alpha) = likelihood(Y, x0, alpha[1], alpha[2], alpha[3], alpha[4], N)
+    # optimize(approx, [0.55, 0.25], Optim.Options(iterations = 1000))
 
-model = DensityModel(approx)
-p1 = RWMH([Normal(0.55, 2), Normal(0.25, 2), Normal(1.1, 2), Normal(0.9, 2)])
-@time chain = sample(model, p1, 100000; param_names = ["α", "β", "δ", "σ"], chain_type = Chains)
+    # model = DensityModel(approx)
+    # # p1 = RWMH([Normal(0.55, 2), Normal(0.25, 2), Normal(1.1, 2), Normal(0.9, 2)])
+    # p2 = RWMH([Uniform(), Uniform(), Normal(1.3, 10), Normal(0.7, 10)])
+    # println("n = 40, N = 100000, aber normalverteilte und schlechtere Priors")
+    # p1 = RWMH([Normal(0.55, 2), Normal(0.25, 2), Normal(1.1, 2), Normal(0.9, 2)])
+    # @time chain = sample(model, p1, 100000; param_names = ["α", "β", "δ", "σ"], chain_type = Chains)
+    # # @time chain = sample(model, p2, 100000; param_names = ["α", "β", "δ", "σ"], chain_type = Chains)
+    # println(chain)
+end
+
+main()
