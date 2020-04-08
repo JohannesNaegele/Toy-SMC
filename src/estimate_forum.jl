@@ -1,17 +1,21 @@
 using Distributions
-# using Plots
+using Plots
 # using BenchmarkTools
 # using Optim
 # using ForwardDiff
 # using Traceur
-# using AdvancedMH
-# using MCMCChains
+using AdvancedMH
+using MCMCChains
 # using Turing
+using Distributed
 
 
 cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
-include("simulate.jl") # include the data-generating function
+include("simulate.jl") # include the data-generating function 
 
+addprocs(6)
+
+Threads.nthreads()
 
 function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     n = length(Y)
@@ -26,7 +30,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     W = zeros(N) 
     for i in 1:n
         W[:] = rand(w, N)
-        for j in 1:N
+        Threads.@threads for j in 1:N
             if i == 1
                 X_normal[j] = α + β * (x0 / (1 + x0^2)) + W[j]
             else
@@ -41,7 +45,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         # I generate quantiles for sampling
         Q .= Q ./ sum(Q)
         # multinomial sampling, I generate a uniform distributed value and divide the Q array in half and look in which part it is (and so on)
-        for j in 1:N
+        Threads.@threads for j in 1:N
             step = rand(u)
             K = 1
             L = Int(trunc(N / 2))
@@ -66,23 +70,27 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     return sum(x->log(x), P)
 end
 
-n = 50 # number of observations
-N = 100000 # number of particles
-α = 0.5; β = 0.3; δ = 1.; σ = 1. # parameters
-x0 = 1 # start value
+n = 1500 # number of observations
+N = 1000 # number of particles
+α = 0.5; β = 0.3; δ = 1.; σ = 0.2 # parameters
+x0 = 1. # start value
 Y = zeros(2, n)
 simulate(x0, Y) # generates hypothetical data
 Y = Y[1,:] # only the observable data
-# plot(Y)
+plot(Y)
 @time likely = likelihood(Y, x0, α, β, δ, σ, N)
-α = 1. # no real difference
+α = 0.51; β = 0.3; δ = 1.; σ = 0.5 # parameters
 @time likely = likelihood(Y, x0, α, β, δ, σ, N)
 α = 10. # now it get's finally smaller
 @time likely = likelihood(Y, x0, α, β, δ, σ, N)
 
 ## additional: Metropolis-Hastings for α and β
-
-# approx(params) = likelihood(Y, x0, params[1], params[2], 1., 1., N)
-# model = DensityModel(approx)
-# p1 = RWMH([Normal(0.55,2), Normal(0.25,2)])
-# @time chain = sample(model, p1, 60000; param_names=["α", "β"], chain_type=Chains)
+prior = [Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)]
+approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)+sum(logpdf.(prior, params))
+approx([1,2,3,4])
+model = DensityModel(approx)
+# p1 = RWMH([Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)])
+p1 = RWMH([Normal(),Normal(),Normal(),Normal()])
+@time chain = sample(model, p1, 100000; param_names=["α", "β", "δ", "σ"], chain_type=Chains)
+println(chain)
+plot(chain; colordim = :chain)

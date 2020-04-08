@@ -97,8 +97,8 @@ function likelihood(Y::Array{Float64,1}, P, V, Q, Q_last, W, X_normal, X_sample,
 end
 
 function main()
-    n = 50
-    N = 100000
+    n = 1000
+    N = 10000
     x0 = 1
     Y = zeros(2, n)
     simulate(x0, Y)
