@@ -90,12 +90,12 @@ plot(Y)
 
 ## additional: Metropolis-Hastings for α, β, δ, σ
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
-approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)+sum(logpdf.(prior, params))
+approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
 approx([α,β,δ,1.1])
 model = DensityModel(approx)
 # p1 = RWMH([Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)])
 # p1 = RWMH([Normal(),Normal(),Normal(),Normal()])
 p1 = RWMH(prior)
-@time chain = sample(model, p1, 400000; param_names=["α", "β", "δ", "σ"], chain_type=Chains)
+@time chain = sample(model, p1, 200000; param_names=["α", "β", "δ", "σ"], chain_type=Chains)
 println(chain)
 plot(chain; colordim = :chain)
