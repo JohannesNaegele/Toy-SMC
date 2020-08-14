@@ -91,11 +91,47 @@ plot(Y)
 ## additional: Metropolis-Hastings for α, β, δ, σ
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
 approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
-approx([α,β,δ,1.1])
+approx([α,β,δ,1.0])
 model = DensityModel(approx)
 # p1 = RWMH([Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)])
 # p1 = RWMH([Normal(),Normal(),Normal(),Normal()])
 p1 = RWMH(prior)
 @time chain = sample(model, p1, 200000; param_names=["α", "β", "δ", "σ"], chain_type=Chains)
 println(chain)
-plot(chain; colordim = :chain)
+
+prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
+parameter = [0.1, 0.1, 0.7, 1.2]
+
+function metropolis(prior, params, n::Int)
+    chi = Uniform()
+    proposal = MvNormal(4,0.05)
+    # Step 0
+    params_0 = params
+    likeli_0 = approx(params_0)
+    p_0 = prod(pdf.(prior, params_0))
+    accept = zeros(100)
+    ratio = 0.5
+    c = 1.
+    params_1 = 0
+    for i in 1:n
+        # Step 1
+        params_1 = params_0 + c*rand(proposal)
+        likeli_1 = approx(params_1) 
+        p_1 = prod(pdf.(prior, params_1)) 
+        q_0 = pdf(proposal, (params_1-params_0)/(c^2))
+        q_1 = pdf(proposal, (params_0-params_1)/(c^2))
+        if rand(chi) <= (exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0))
+            params_0 = params_1
+            accept[((i-1) % 100 + 1)] = 1
+        end 
+        if i % 100 == 0 
+            ratio = sum(accept)/100
+            println(i)
+            println(ratio)
+            c = c/(ratio/0.234)
+        end      
+    end
+    println(params_1)
+end
+
+metropolis(prior, parameter, 10000)
