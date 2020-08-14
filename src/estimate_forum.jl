@@ -10,7 +10,8 @@ using MCMCChains
 using Distributed
 
 
-cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
+# cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
+cd("C:/Users/Johannes/Nextcloud/Documents/GitHub/Toy-SMC/src")
 include("simulate.jl") # include the data-generating function 
 
 addprocs(6)
@@ -70,28 +71,31 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     return sum(x->log(x), P)
 end
 
-n = 1500 # number of observations
-N = 1200 # number of particles
-α = 0.5; β = 0.3; δ = 1.; σ = 0.2 # parameters
+
+n = 100 # number of observations
+N = 2000 # number of particles
+α = 0.5; β = 0.3; δ = 1.; σ = 1. # parameters
 x0 = 1. # start value
 Y = zeros(2, n)
 simulate(x0, Y) # generates hypothetical data
 Y = Y[1,:] # only the observable data
+@time likely = likelihood(Y, x0, 0.5, β, 1.0, 1.1, N)
+
 @btime likely = likelihood(Y, x0, α, β, δ, σ, N)
 plot(Y)
-@time likely = likelihood(Y, x0, α, β, δ, σ, N)
 α = 0.51; β = 0.3; δ = 1.; σ = 0.5 # parameters
 @time likely = likelihood(Y, x0, α, β, δ, σ, N)
 α = 10. # now it get's finally smaller
 @btime likely = likelihood(Y, x0, α, β, δ, σ, N)
 
-## additional: Metropolis-Hastings for α and β
-prior = [Uniform(), Uniform(), Normal(1.2,1.0), Gamma(1.0,1.0)]
+## additional: Metropolis-Hastings for α, β, δ, σ
+prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
 approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)+sum(logpdf.(prior, params))
-approx([1,2,3,4])
+approx([α,β,δ,1.1])
 model = DensityModel(approx)
 # p1 = RWMH([Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)])
-p1 = RWMH([Normal(),Normal(),Normal(),Normal()])
+# p1 = RWMH([Normal(),Normal(),Normal(),Normal()])
+p1 = RWMH(prior)
 @time chain = sample(model, p1, 400000; param_names=["α", "β", "δ", "σ"], chain_type=Chains)
 println(chain)
 plot(chain; colordim = :chain)
