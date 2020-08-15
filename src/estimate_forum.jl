@@ -100,7 +100,8 @@ println(chain)
 
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
 approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
-parameter = [0.5, 0.3, 1., 1.]
+# parameter = [0.5, 0.3, 1., 1.]
+parameter = [0.6, 0.2, 1.1, 1.1]
 
 function metropolis(prior, params, n::Int)
     chi = Uniform()
@@ -111,32 +112,45 @@ function metropolis(prior, params, n::Int)
     p_0 = prod(pdf.(prior, params_0))
     accept = zeros(100)
     ratio = 0.5
-    c = 1.
+    c = 2.
+    c_0 = c
     params_1 = 0
     for i in 1:n
         # Step 1
         params_1 = params_0 + c*rand(proposal)
         likeli_1 = approx(params_1) 
         p_1 = prod(pdf.(prior, params_1)) 
-        q_0 = pdf(proposal, (params_1-params_0)/(c^2))
-        q_1 = pdf(proposal, (params_0-params_1)/(c^2))
-        if rand(chi) <= (exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0))
-            println((exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0)))
+        if i % 100 == 1
+            q_0 = logpdf(proposal, (params_1-params_0)/(c_0^2))
+            q_1 = logpdf(proposal, (params_0-params_1)/(c^2))
+        else
+            q_0 = 1.
+            q_1 = 1.
+        end
+        # println("$(exp(q_1-q_0))")
+        if rand(chi) <= (exp(likeli_1-likeli_0)*exp(q_1-q_0)*p_1/(p_0))
+            # println(exp(likeli_1-likeli_0))
             params_0 = params_1
             accept[((i-1) % 100 + 1)] = 1
+            # println("accept")
+        else
+            # println("reject")
         end 
+        # println(params_1)
         if i % 100 == 0 
             ratio = sum(accept)/100
             println(i)
             println(round(ratio, digits=15))
-            println(params_0)
-            # c = c*(ratio/0.234)
-            # println(c)
-            #  println((exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0)))
+            # println(params_0)
+            c_0 = c
+            c = c*(ratio/0.234)^(1/2)
+            println(c)
+            println((exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0)))
             # c = 20.
+            accept[:] = zeros(100)
         end      
     end
     println(params_1)
 end
 
-metropolis(prior, parameter, 1000)
+@time metropolis(prior, parameter, 10000)
