@@ -90,7 +90,6 @@ plot(Y)
 
 ## additional: Metropolis-Hastings for α, β, δ, σ
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
-approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
 approx([α,β,δ,1.0])
 model = DensityModel(approx)
 # p1 = RWMH([Uniform(), Uniform(), Normal(1.2,2), Normal(0.18,1)])
@@ -100,7 +99,8 @@ p1 = RWMH(prior)
 println(chain)
 
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
-parameter = [0.1, 0.1, 0.7, 1.2]
+approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
+parameter = [0.5, 0.3, 1., 1.]
 
 function metropolis(prior, params, n::Int)
     chi = Uniform()
@@ -121,17 +121,22 @@ function metropolis(prior, params, n::Int)
         q_0 = pdf(proposal, (params_1-params_0)/(c^2))
         q_1 = pdf(proposal, (params_0-params_1)/(c^2))
         if rand(chi) <= (exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0))
+            println((exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0)))
             params_0 = params_1
             accept[((i-1) % 100 + 1)] = 1
         end 
         if i % 100 == 0 
             ratio = sum(accept)/100
             println(i)
-            println(ratio)
-            c = c/(ratio/0.234)
+            println(round(ratio, digits=15))
+            println(params_0)
+            # c = c*(ratio/0.234)
+            # println(c)
+            #  println((exp(likeli_1-likeli_0)*p_1*q_1/(p_0*q_0)))
+            # c = 20.
         end      
     end
     println(params_1)
 end
 
-metropolis(prior, parameter, 10000)
+metropolis(prior, parameter, 1000)
