@@ -78,7 +78,7 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     w = Normal(0, σ^2) # different than in the paper (squared)
     u = Uniform() # needed for sampling
     X_normal = zeros(N)
-    X_sample = zeros(N)
+    X_sample = zeros(N) # accepted
     b = zeros(N)
     c = zeros(N)
     V = zeros(N)
@@ -104,8 +104,8 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         if i==1
             # We resample with weights
             v1 = rand(u)*N
-            b[1] = floor(Q(1,1)-v1)
-            b0 = floor(0.0-v1)
+            b[1] = trunc(Q[1,1]-v1)
+            b0 = trunc(0.0-v1)
             c(1) = b(1)-b0
             xaccepted(1:c(1))  = xsim(1,1)
         else
