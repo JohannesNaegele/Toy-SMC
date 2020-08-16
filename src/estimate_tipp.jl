@@ -106,8 +106,8 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
             v1 = rand(u)*N
             b[1] = trunc(Q[1,1]-v1)
             b0 = trunc(0.0-v1)
-            c(1) = b(1)-b0
-            xaccepted(1:c(1))  = xsim(1,1)
+            c[1] = b[1] - b0
+            X_sample(1:c[1]) = X_normal[1,1]
         else
     end
     return sum(x->log(x), P)
