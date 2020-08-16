@@ -1,7 +1,7 @@
 using Distributions
 using Plots
 using BenchmarkTools
-# using Optim
+using Optim
 # using ForwardDiff
 # using Traceur
 using AdvancedMH
@@ -72,14 +72,15 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
 end
 
 
-n = 100 # number of observations
+n = 1000 # number of observations
 N = 2000 # number of particles
 α = 0.5; β = 0.3; δ = 1.; σ = 1. # parameters
+# 0.729, 0.415, 0.538, 0.161 Ergebnis
 x0 = 1. # start value
 Y = zeros(2, n)
 simulate(x0, Y) # generates hypothetical data
 Y = Y[1,:] # only the observable data
-@time likely = likelihood(Y, x0, 0.5, β, 1.0, 1.1, N)
+@time likely = likelihood(Y, x0, 0.5, β, 1.0, 1.0, N)
 
 @btime likely = likelihood(Y, x0, α, β, δ, σ, N)
 plot(Y)
@@ -103,7 +104,8 @@ approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N
 # parameter = [0.5, 0.3, 1., 1.]
 parameter = [0.6, 0.2, 1.1, 1.1]
 
-function metropolis(prior, params, n::Int)
+function metropolis(prior, params, n::Int, burn::Int=0)
+    speicher = zeros(4, n-burn)
     chi = Uniform()
     proposal = MvNormal(4,0.05)
     # Step 0
@@ -137,11 +139,14 @@ function metropolis(prior, params, n::Int)
             # println("reject")
         end 
         # println(params_1)
+        if i > burn
+            speicher[:, i-burn] = params_0
+        end
         if i % 100 == 0 
             ratio = sum(accept)/100
             println(i)
             println(round(ratio, digits=15))
-            # println(params_0)
+            println(params_0)
             c_0 = c
             c = c*(ratio/0.234)^(1/2)
             println(c)
@@ -151,6 +156,15 @@ function metropolis(prior, params, n::Int)
         end      
     end
     println(params_1)
+    return speicher
 end
 
-@time metropolis(prior, parameter, 10000)
+@time results = metropolis(prior, parameter, 100000, 10000)
+# hist(results[1])
+mean(results[4, :])
+
+opt(param) = -approx(param)
+optimum = optimize(opt, parameter, Optim.Options(iterations = 5000))
+Optim.minimizer(optimum)
+
+approx(Optim.minimizer(optimum))
