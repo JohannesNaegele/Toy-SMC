@@ -79,6 +79,8 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     u = Uniform() # needed for sampling
     X_normal = zeros(N)
     X_sample = zeros(N)
+    b = zeros(N)
+    c = zeros(N)
     V = zeros(N)
     Q = zeros(N)
     W = zeros(N) 
@@ -98,28 +100,15 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         P[i] = sum(Q) / N
         # I generate quantiles for sampling
         Q .= Q ./ sum(Q)
-        # multinomial sampling, I generate a uniform distributed value and divide the Q array in half and look in which part it is (and so on)
-        Threads.@threads for j in 1:N
-            step = rand(u)
-            K = 1
-            L = Int(trunc(N / 2))
-            M = N
-            k = 1
-            while K != M - 1 && k < N
-                if Q[K + L] < step
-                    K = K + L
-                    L = Int(trunc((M - K) / 2))
-                else
-                    M = K + L
-                    L = Int(trunc((M - K) / 2))
-                    k += 1
-                end
-            end  
-            if Q[K] < step
-                K += 1
-            end    
-            X_sample[j] = X_normal[K] # save the sampled values 
-        end
+        Q = cumsum(Q) * N
+        if i==1
+            # We resample with weights
+            v1 = rand(u)*N
+            b[1] = floor(Q(1,1)-v1)
+            b0 = floor(0.0-v1)
+            c(1) = b(1)-b0
+            xaccepted(1:c(1))  = xsim(1,1)
+        else
     end
     return sum(x->log(x), P)
 end
