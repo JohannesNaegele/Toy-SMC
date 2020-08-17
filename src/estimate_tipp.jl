@@ -101,14 +101,25 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         # I generate quantiles for sampling
         Q .= Q ./ sum(Q)
         Q = cumsum(Q) * N
-        if i==1
+        if i == 1
             # We resample with weights
             v1 = rand(u)*N
-            b[1] = trunc(Q[1,1]-v1)
+            b[1] = trunc(Q[1]-v1)
             b0 = trunc(0.0-v1)
             c[1] = b[1] - b0
-            X_sample(1:c[1]) = X_normal[1,1]
+            X_sample(1:c[1]) .= X_normal[1]
+            j = c[1]
+            for sim in 2:N 
+                b[1] = trunc(Q[1]-v1)
+                b0 = trunc(0.0-v1)
+                c[1] = b[sim] - b[sim - 1]
+                X_sample(j+1:j+c[sim]) .= X_normal[sim]
+                j += c(sim)
+            end
+            # x_sample wird automatisch in der nächsten Runde genutzt
         else
+
+        end
     end
     return sum(x->log(x), P)
 end
