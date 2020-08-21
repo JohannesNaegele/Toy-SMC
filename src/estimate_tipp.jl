@@ -11,10 +11,11 @@ using Distributed
 
 
 # cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
-cd("C:/Users/Johannes/Nextcloud/Documents/GitHub/Toy-SMC/src")
+# cd("C:/Users/Johannes/Nextcloud/Documents/GitHub/Toy-SMC/src")
+cd("C:/Users/econo/Nextcloud/Documents/GitHub/Toy-SMC/src")
 include("simulate.jl") # include the data-generating function 
 
-addprocs(6)
+# addprocs(1)
 
 Threads.nthreads()
 
@@ -80,7 +81,7 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
     X_normal = zeros(N)
     X_sample = zeros(N) # accepted
     b = zeros(N)
-    c = zeros(N)
+    c = convert(Array{Int}, zeros(N))
     V = zeros(N)
     Q = zeros(N)
     W = zeros(N) 
@@ -101,24 +102,23 @@ function likelihood_tipp(Y::Array{Float64,1}, x0, α, β, δ, σ, N = 1000)
         # I generate quantiles for sampling
         Q .= Q ./ sum(Q)
         Q = cumsum(Q) * N
-        if i == 1
+        if true # i == 1
             # We resample with weights
             v1 = rand(u)*N
             b[1] = trunc(Q[1]-v1)
             b0 = trunc(0.0-v1)
-            c[1] = b[1] - b0
-            X_sample(1:c[1]) .= X_normal[1]
+            c[1] = Int(b[1] - b0)
+            # println(c[1])
+            X_sample[1:c[1]] .= X_normal[1]
             j = c[1]
             for sim in 2:N 
-                b[1] = trunc(Q[1]-v1)
-                b0 = trunc(0.0-v1)
-                c[1] = b[sim] - b[sim - 1]
-                X_sample(j+1:j+c[sim]) .= X_normal[sim]
-                j += c(sim)
+                b[1] = Int(trunc(Q[1]-v1))
+                b0 = Int(trunc(0.0-v1))
+                c[1] = Int(b[sim] - b[sim - 1])
+                X_sample[j+1:j+c[sim]] .= X_normal[sim]
+                j += c[sim]
             end
             # x_sample wird automatisch in der nächsten Runde genutzt
-        else
-
         end
     end
     return sum(x->log(x), P)
@@ -126,12 +126,15 @@ end
 
 
 n = 1000 # number of observations
-N = 2000 # number of particles
-α = 0.5; β = 0.3; δ = 1.; σ = 1. # parameters
+N = 10000 # number of particles
+α = 0.5; β = 0.3; δ = 1.; σ = 1.# parameters
 # 0.729, 0.415, 0.538, 0.161 Ergebnis
 x0 = 1. # start value
 Y = zeros(2, n)
-simulate(x0, Y) # generates hypothetical data
-Y = Y[1,:] # only the observable data
-@time likely = likelihood(Y, x0, 0.5, β, 1.0, 1.0, N)
-
+simulate(x0, Y, α, β, δ, 1.) # generates hypothetical data
+Y = Y[2,:] # only the observable data
+# plot(Y)
+@time likely = likelihood(Y, x0, 0.5, β, 1.0, 1., N)
+@time likely = likelihood(Y, x0, 0.5, β, 1., 0.1, N)
+@time likely = likelihood_tipp(Y, x0, α, β, δ, 0.8, N)
+@time likely = likelihood_tipp(Y, x0, α, β, δ, 1., N)

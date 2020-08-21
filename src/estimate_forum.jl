@@ -79,7 +79,7 @@ N = 2000 # number of particles
 x0 = 1. # start value
 Y = zeros(2, n)
 simulate(x0, Y) # generates hypothetical data
-Y = Y[1,:] # only the observable data
+Y = Y[2,:] # only the observable data
 @time likely = likelihood(Y, x0, 0.5, β, 1.0, 1.0, N)
 
 @btime likely = likelihood(Y, x0, α, β, δ, σ, N)
@@ -100,9 +100,9 @@ p1 = RWMH(prior)
 println(chain)
 
 prior = [Uniform(), Uniform(), Normal(0.7,2.0), Gamma(1.2,1.0)]
-approx(params) = likelihood(Y, x0, params[1], params[2], params[3], params[4], N)
+approx(params) = likelihood_tipp(Y, x0, params[1], params[2], params[3], params[4], N)
 # parameter = [0.5, 0.3, 1., 1.]
-parameter = [0.6, 0.2, 1.1, 1.1]
+parameter = [0.6, 0.2, 0.9, 1.1]
 
 function metropolis(prior, params, n::Int, burn::Int=0)
     speicher = zeros(4, n-burn)
@@ -168,3 +168,4 @@ optimum = optimize(opt, parameter, Optim.Options(iterations = 5000))
 Optim.minimizer(optimum)
 
 approx(Optim.minimizer(optimum))
+approx([0.5, 0.3, 1., 1.])
