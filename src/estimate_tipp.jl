@@ -11,8 +11,8 @@ using Distributed
 
 
 # cd("/home/johannes/Documents/GitHub/Toy-SMC/src/")
-# cd("C:/Users/Johannes/Nextcloud/Documents/GitHub/Toy-SMC/src")
-cd("C:/Users/econo/Nextcloud/Documents/GitHub/Toy-SMC/src")
+cd("C:/Users/Johannes/Nextcloud/Documents/GitHub/Toy-SMC/src")
+# cd("C:/Users/econo/Nextcloud/Documents/GitHub/Toy-SMC/src")
 include("simulate.jl") # include the data-generating function 
 
 # addprocs(1)
@@ -126,15 +126,28 @@ end
 
 
 n = 1000 # number of observations
-N = 10000 # number of particles
+N = 2000 # number of particles
 α = 0.5; β = 0.3; δ = 1.; σ = 1.# parameters
-# 0.729, 0.415, 0.538, 0.161 Ergebnis
+# 0.729, 0.415, 0.538, 0.161 Ergebnis für likelihood
 x0 = 1. # start value
 Y = zeros(2, n)
 simulate(x0, Y, α, β, δ, 1.) # generates hypothetical data
 Y = Y[2,:] # only the observable data
-# plot(Y)
+plot(Y)
 @time likely = likelihood(Y, x0, 0.5, β, 1.0, 1., N)
 @time likely = likelihood(Y, x0, 0.5, β, 1., 0.1, N)
-@time likely = likelihood_tipp(Y, x0, α, β, δ, 0.8, N)
+@time likely = likelihood(Y, x0, 0.729, 0.415, 0.538, 0.161, N)
 @time likely = likelihood_tipp(Y, x0, α, β, δ, 1., N)
+@time likely = likelihood_tipp(Y, x0, 0.729, 0.415, 0.538, 0.161, N)
+
+approx(params) = likelihood_tipp(Y, x0, params[1], params[2], params[3], params[4], N)
+opt(param) = -approx(param)
+parameter = [0.6, 0.2, 0.9, 1.1]
+@time optimum = optimize(opt, parameter, Optim.Options(iterations = 1000))
+Optim.minimizer(optimum)
+
+approx(Optim.minimizer(optimum))
+approx([0.5, 0.3, 1., 1.])
+approx([0.738182541174397, 0.3, 0.7181540483586608, 1.1715398374500237])
+
+# 0.738182541174397, 0.22294838620791602, 0.7181540483586608, 1.1715398374500237
