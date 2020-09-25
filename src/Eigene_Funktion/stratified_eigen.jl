@@ -32,7 +32,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, μ, τ, N = 10000)
             else
                 X_p[j] = X_s[j]*α + β/(1 + X_s[j]^2) + W[j]
             end
-            V[j] = Y[i] - X_p[j]
+            V[j] = (Y[i] - X_p[j])*10
             Q[j] = pdf(v, V[j])
         end
         # This evaluates the likelihood for some time i; law of large numbers
@@ -84,3 +84,10 @@ Optim.minimizer(optimum)
 
 approx([α, β, μ, τ])
 approx(Optim.minimizer(optimum))
+
+# julia> Optim.minimizer(optimum)
+# 4-element Array{Float64,1}:
+#  0.4789745373435752
+#  1.4935466093527272
+#  1.1710779161711162
+#  0.9360542460215023
