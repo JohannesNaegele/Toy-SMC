@@ -148,6 +148,44 @@ Optim.minimizer(optimum)
 
 approx(Optim.minimizer(optimum))
 approx([0.5, 0.3, 1., 1.])
-approx([0.738182541174397, 0.3, 0.7181540483586608, 1.1715398374500237])
 
 # 0.738182541174397, 0.22294838620791602, 0.7181540483586608, 1.1715398374500237
+# Überprüfung: Umgekehrt 
+
+n = 1000 # number of observations
+N = 2000 # number of particles
+α = 0.738182541174397; β = 0.22294838620791602; δ = 0.7181540483586608; σ = 1.1715398374500237 # parameters
+x0 = 1. # start value
+Y = zeros(2, n)
+simulate(x0, Y, α, β, δ, σ) # generates hypothetical data
+Y = Y[2,:] # only the observable data
+plot(Y)
+
+approx(params) = likelihood_tipp(Y, x0, params[1], params[2], params[3], params[4], N)
+opt(param) = -approx(param)
+parameter = [0.4, 0.4, 1.1, 0.9]
+@time optimum = optimize(opt, parameter, Optim.Options(iterations = 1000))
+Optim.minimizer(optimum)
+
+approx(Optim.minimizer(optimum))
+approx([α, β, δ, σ])
+
+# Überprüfung: nur α und β frei
+
+n = 1000 # number of observations
+N = 2000 # number of particles
+α = 0.5; β = 0.3; δ = 1.0; σ = 1.0 # parameters
+x0 = 1. # start value
+Y = zeros(2, n)
+simulate(x0, Y, α, β, δ, σ) # generates hypothetical data
+Y = Y[2,:] # only the observable data
+plot(Y)
+
+approx(params) = likelihood_tipp(Y, x0, params[1], params[2], δ, σ, N)
+opt(param) = -approx(param)
+parameter = [0.1, 0.5]
+@time optimum = optimize(opt, parameter, Optim.Options(iterations = 1000))
+Optim.minimizer(optimum)
+
+approx(Optim.minimizer(optimum))
+approx([α, 1.])
