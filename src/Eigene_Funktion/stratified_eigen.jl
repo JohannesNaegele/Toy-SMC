@@ -30,7 +30,7 @@ function likelihood(Y::Array{Float64,1}, x0, α, β, μ, τ, N = 10000)
             if i == 1
                 X_p[j] = x0
             else
-                X_p[j] = X_s[j]*α + β/(1 + X_s[j]^2) + W[j]
+                X_p[j] = X_s[j]*α + β/(1 + X_s[j]^2) + 0.1*W[j]
             end
             V[j] = (Y[i] - X_p[j])*10
             Q[j] = pdf(v, V[j])
@@ -82,6 +82,7 @@ Optim.minimizer(optimum)
 #  1.2007515648766613
 #  0.9753464747966533
 
+# für 0.1*v
 approx([α, β, μ, τ])
 approx(Optim.minimizer(optimum))
 
@@ -91,3 +92,5 @@ approx(Optim.minimizer(optimum))
 #  1.4935466093527272
 #  1.1710779161711162
 #  0.9360542460215023
+
+# für 0.1*v und 0.1*w
